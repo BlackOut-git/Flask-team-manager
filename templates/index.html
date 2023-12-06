@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>인력사무소</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alert alert-warning">
+                    {{ messages[0] }}
+                </div>
+            {% endif %}
+        {% endwith %}
+        <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+            <h1>인력사무소</h1>
+            <div>
+                <form method="POST" action="{{ url_for('filter_teams') }}" class="d-inline-block">
+                    <div class="form-group">
+                        <select class="custom-select" name="team_type" onchange="this.form.submit()">
+                            <option value="">모든 종류</option>
+                            <option value="팀원 모집" {% if session['team_type'] == '팀원 모집' %}selected{% endif %}>팀원 모집</option>
+                            <option value="팀원 참가" {% if session['team_type'] == '팀원 참가' %}selected{% endif %}>팀원 참가</option>
+                            <option value="용병 모집" {% if session['team_type'] == '용병 모집' %}selected{% endif %}>용병 모집</option>
+                            <option value="용병 참가" {% if session['team_type'] == '용병 참가' %}selected{% endif %}>용병 참가</option>
+                        </select>
+                    </div>
+                </form>
+                <!-- Add Team Modal -->
+                <button type="button" class="btn btn-primary ml-2" data-toggle="modal" data-target="#teamModal">작성하기</button>
+            </div>
+        </div>
+        <p>팀원은 72시간 용병은 24시간</p>
+        <div class="modal fade" id="teamModal" tabindex="-1" role="dialog" aria-labelledby="teamModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="teamModalLabel">Add Team</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <form action="/add_team" method="post">
+                        <div class="modal-body">
+                        <div class="form-group">
+                            <label for="teamType">팀 타입</label>
+                            <select class="form-control" id="teamType" name="team_type" required>
+                                <option value="팀원 모집">팀원 모집</option>
+                                <option value="팀원 참가">팀원 참가</option>
+                                <option value="용병 모집">용병 모집</option>
+                                <option value="용병 참가">용병 참가</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" name="nickname" placeholder="Nickname" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" name="tier" placeholder="Tier" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" name="character" placeholder="Character" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" name="play_time" placeholder="Play Time" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" name="message" placeholder="Message" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" name="discord_id" placeholder="Discord ID" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                          <input type="password" name="password" placeholder="Password" class="form-control" pattern="\d{4}" title="4자리 숫자로 입력해주세요" required>
+                        </div>
+                      </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Add Team</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>구분</th>
+                <th>닉네임</th>
+                <th>티어</th>
+                <th>주 실험체</th>
+                <th>플레이 시간</th>
+                <th>하고싶은 말</th>
+                <th>디스코드</th>
+                <th>작성일</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for team in teams %}
+            <tr>
+                <td>{{ team.team_type }}</td>
+                <td>{{ team.nickname }}</td>
+                <td>{{ team.tier }}</td>
+                <td>{{ team.character }}</td>
+                <td>{{ team.play_time }}</td>
+                <td>{{ team.message }}</td>
+                <td>{{ team.discord_id }}</td>
+                <td>{{ team.created_at.strftime('%m.%d %H:%M') }}</td>
+                <td class="text-right">
+                    <!-- Edit Team Button -->
+                    <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editTeamModal{{ team.id }}">수정</button>
+                    <!-- Delete Team Button -->
+                    <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteTeamModal{{ team.id }}">삭제</button>
+                </td>
+            </tr>
+            <!-- Edit Team Modal -->
+            <div class="modal fade" id="editTeamModal{{ team.id }}" tabindex="-1" role="dialog" aria-labelledby="editTeamModalLabel{{ team.id }}" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editTeamModalLabel{{ team.id }}">Edit Team</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form action="/edit_team/{{ team.id }}" method="post">
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <select class="form-control" id="teamType" name="team_type" required>
+                                        <option value="팀원 모집" {% if session['team_type'] == '팀원 모집' %}selected{% endif %}>팀원 모집</option>
+                                        <option value="팀원 참가" {% if session['team_type'] == '팀원 참가' %}selected{% endif %}>팀원 참가</option>
+                                        <option value="용병 모집" {% if session['team_type'] == '용병 모집' %}selected{% endif %}>용병 모집</option>
+                                        <option value="용병 참가" {% if session['team_type'] == '용병 참가' %}selected{% endif %}>용병 참가</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="nickname">Nickname</label>
+                                    <input type="text" id="nickname" name="nickname" value="{{ team.nickname }}" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tier">Tier</label>
+                                    <input type="text" id="tier" name="tier" value="{{ team.tier }}" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="character">Character</label>
+                                    <input type="text" id="character" name="character" value="{{ team.character }}" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="play_time">Play Time</label>
+                                    <input type="text" id="play_time" name="play_time" value="{{ team.play_time }}" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="message">Message</label>
+                                    <input type="text" id="message" name="message" value="{{ team.message }}" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="discord_id">Discord ID</label>
+                                    <input type="text" id="discord_id" name="discord_id" value="{{ team.discord_id }}" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="password">Password</label>
+                                    <input type="password" id="password" name="password" placeholder="Password" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-primary">Edit</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- Delete Team Modal -->
+            <div class="modal fade" id="deleteTeamModal{{ team.id }}" tabindex="-1" role="dialog" aria-labelledby="deleteTeamModalLabel{{ team.id }}" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="deleteTeamModalLabel{{ team.id }}">Delete Team</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form action="/delete_team/{{ team.id }}" method="post">
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <input type="password" name="password" placeholder="Password" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-danger">Delete</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
